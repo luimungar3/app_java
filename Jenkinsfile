@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         REGISTRY = "docker.io"  // Registro Docker (Docker Hub en este caso)
-        IMAGE_NAME = "app_listatareas"  // Nombre de la imagen
     }
 
     stages {
