@@ -2,66 +2,49 @@ pipeline {
     agent any
 
     environment {
-        // Definir variables de entorno si es necesario
-        REGISTRY = "mi-registro-docker"  // Cambia esto al nombre de tu registro de Docker (si es necesario)
-        IMAGE_NAME = "lista-de-tareas-app"  // Nombre de la imagen Docker
-        IMAGE_TAG = "latest"  // Etiqueta de la imagen (puedes usar la versión de tu aplicación o un número de compilación)
+        REGISTRY = "docker.io"  // Registro Docker (Docker Hub en este caso)
+        IMAGE_NAME = "app_listatareas"  // Nombre de la imagen
     }
 
     stages {
-        stage('Clonar Repositorio') {
+        stage('Verificacion SCM') {
             steps {
-                // Clonar el repositorio de tu código fuente
-                git 'https://github.com/usuario/tu-repositorio.git'  // Cambia la URL de tu repositorio
-            }
-        }
+                // Verificamos el código fuente desde el repositorio
+                checkout scm
 
-        stage('Construir Aplicación con Maven') {
-            steps {
-                // Ejecutar Maven para construir el archivo JAR
-                sh 'mvn clean package -DskipTests=true'  // Puedes agregar o quitar el parámetro `-DskipTests` según sea necesario
-            }
-        }
-
-        stage('Construir Imagen Docker') {
-            steps {
+                // Obtener el último commit de git y guardarlo en un archivo
                 script {
-                    // Construir la imagen Docker
-                    sh 'docker build -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .'
+                    sh "git rev-parse --short HEAD > .git/commit-id"
+                    gitcommit = readFile('.git/commit-id').trim()
                 }
             }
         }
 
-        stage('Ejecutar Imagen Docker (Opcional)') {
+        stage('Test') {
             steps {
+                // Crear un contenedor de pruebas y ejecutar las pruebas
                 script {
-                    // Ejecutar la imagen Docker en un contenedor para pruebas locales
-                    sh 'docker run -d -p 8080:8080 ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}'
+                    def contenedortest = docker.image('openjdk:11-jre-slim')  // Usamos un contenedor con Java
+                    contenedortest.pull()
+                    contenedortest.inside {
+                        // Ejecutar la construcción de la aplicación usando Maven
+                        sh 'mvn clean package -DskipTests=true'
+                        // Ejecutar las pruebas si las tienes configuradas
+                        sh 'mvn test'
+                    }
                 }
             }
         }
 
-        stage('Test de Aplicación (Opcional)') {
+        stage('Docker Build & Push') {
             steps {
-                // Si tienes pruebas automatizadas, puedes ejecutarlas aquí
-                sh 'mvn test'  // Esto ejecutará las pruebas de tu aplicación con Maven
-            }
-        }
-
-        stage('Push Imagen Docker (Opcional)') {
-            steps {
+                // Construir y subir la imagen Docker al registro
                 script {
-                    // Publicar la imagen Docker al registro (solo si es necesario)
-                    sh 'docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}'
-                }
-            }
-        }
-
-        stage('Limpiar Contenedores Docker') {
-            steps {
-                script {
-                    // Limpiar contenedores e imágenes Docker no usados
-                    sh 'docker system prune -f'
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub') {
+                        def nuestraapp = docker.build("${IMAGE_NAME}:${gitcommit}", ".")
+                        // Subir la imagen con el commit hash como tag
+                        nuestraapp.push()
+                    }
                 }
             }
         }
@@ -69,17 +52,17 @@ pipeline {
 
     post {
         always {
-            // Este bloque se ejecuta siempre, incluso si falla la pipeline
-            cleanWs()  // Limpiar el espacio de trabajo de Jenkins después de la ejecución
+            // Limpiar cualquier archivo o contenedor no usado
+            cleanWs()
         }
 
         success {
-            // Este bloque se ejecuta si la pipeline es exitosa
+            // Si la pipeline fue exitosa
             echo 'La construcción y despliegue fueron exitosos.'
         }
 
         failure {
-            // Este bloque se ejecuta si la pipeline falla
+            // Si la pipeline falla
             echo 'Hubo un error en la construcción o despliegue.'
         }
     }
