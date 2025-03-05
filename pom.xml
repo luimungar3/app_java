@@ -31,11 +31,16 @@
     </dependencies>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
+             <plugins>
+                 <plugin>
+                     <groupId>org.springframework.boot</groupId>
+                     <artifactId>spring-boot-maven-plugin</artifactId>
+                     <version>2.7.8</version> <!-- Usa la versión correspondiente de Spring Boot -->
+                     <configuration>
+                <!-- Define la clase principal para el proyecto Spring Boot -->
+                         <mainClass>com.tuempresa.ListaDeTareasApp</mainClass> <!-- Reemplaza con el paquete y nombre de tu clase principal -->
+                     </configuration>
+                 </plugin>
+             </plugins>
     </build>
 </project>
