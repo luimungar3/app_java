@@ -23,7 +23,7 @@ pipeline {
             steps {
                 // Crear un contenedor de pruebas y ejecutar las pruebas
                 script {
-                    def contenedortest = docker.image('openjdk:11-jre-slim')  // Usamos un contenedor con Java
+                    def contenedortest = docker.image('maven:3.8.4-openjdk-11')  // Usamos un contenedor con Java
                     contenedortest.pull()
                     contenedortest.inside {
                         // Ejecutar la construcción de la aplicación usando Maven
