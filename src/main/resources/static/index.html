@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Tareas</title>
+</head>
+<body>
+    <h1>Lista de Tareas</h1>
+
+    <h2>Agregar tarea</h2>
+    <input type="text" id="descripcion" placeholder="Descripción de la tarea" />
+    <button onclick="agregarTarea()">Agregar</button>
+
+    <h2>Tareas</h2>
+    <ul id="tareas-lista"></ul>
+
+    <script>
+        function agregarTarea() {
+            const descripcion = document.getElementById("descripcion").value;
+            fetch('http://localhost:8080/api/tareas/agregar?descripcion=' + descripcion, {
+                method: 'POST'
+            }).then(response => response.text())
+              .then(data => {
+                  alert(data);
+                  listarTareas();
+              });
+        }
+
+        function listarTareas() {
+            fetch('http://localhost:8080/api/tareas/listar')
+                .then(response => response.json())
+                .then(data => {
+                    const lista = document.getElementById("tareas-lista");
+                    lista.innerHTML = '';
+                    data.forEach((tarea, index) => {
+                        const li = document.createElement("li");
+                        li.textContent = tarea;
+                        lista.appendChild(li);
+                    });
+                });
+        }
+
+        // Cargar tareas al cargar la página
+        window.onload = listarTareas;
+    </script>
+</body>
+</html>
