@@ -41,7 +41,7 @@ pipeline {
                 // Construir y subir la imagen Docker al registro
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub') {
-                        def nuestraapp = docker.build("${IMAGE_NAME}:${gitcommit}", ".")
+                        def nuestraapp = docker.build("miguel7834/app_listatareas:${gitcommit}", ".")
                         // Subir la imagen con el commit hash como tag
                         nuestraapp.push()
                     }
